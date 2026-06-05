@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GymRat Rank — Bench Press Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #0e0e0e;
+    --bg2:      #161616;
+    --bg3:      #1e1e1e;
+    --border:   rgba(255,255,255,0.08);
+    --border2:  rgba(255,255,255,0.14);
+    --text:     #f0ede8;
+    --muted:    #888;
+    --accent:   #e8c840;
+    --red:      #e84040;
+    --font-display: 'Bebas Neue', sans-serif;
+    --font-body:    'DM Sans', sans-serif;
+    --radius:   10px;
+    --radius-lg: 16px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── NOISE TEXTURE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.5;
+  }
+
+  .page { position: relative; z-index: 1; max-width: 720px; margin: 0 auto; padding: 0 20px 80px; }
+
+  /* ── HEADER ── */
+  header {
+    padding: 60px 0 40px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 48px;
+  }
+  .header-tag {
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-size: clamp(52px, 10vw, 88px);
+    line-height: 0.9;
+    color: var(--text);
+    letter-spacing: 0.02em;
+    margin-bottom: 16px;
+  }
+  h1 span { color: var(--accent); }
+  .header-sub {
+    font-size: 15px;
+    color: var(--muted);
+    max-width: 480px;
+  }
+
+  /* ── SECTION LABELS ── */
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  /* ── CALCULATOR CARD ── */
+  .calc-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    margin-bottom: 24px;
+  }
+
+  .input-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+
+  @media (max-width: 480px) {
+    .input-grid { grid-template-columns: 1fr; }
+    .calc-card { padding: 20px; }
+  }
+
+  .input-group label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .input-row {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .input-row:focus-within { border-color: var(--accent); }
+
+  .input-row input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    padding: 12px 14px;
+    font-family: var(--font-body);
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text);
+    width: 100%;
+  }
+  .input-row input::placeholder { color: #444; }
+  .input-row input[type=number]::-webkit-inner-spin-button,
+  .input-row input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+  .unit-toggle {
+    display: flex;
+    border-left: 1px solid var(--border2);
+  }
+  .unit-btn {
+    padding: 0 14px;
+    background: transparent;
+    border: none;
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 600;
+    color: #444;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.05em;
+  }
+  .unit-btn:not(:last-child) { border-right: 1px solid var(--border); }
+  .unit-btn.active { color: var(--accent); background: rgba(232,200,64,0.08); }
+  .unit-btn:hover:not(.active) { color: var(--text); }
+
+  .calc-btn {
+    width: 100%;
+    padding: 16px;
+    background: var(--accent);
+    color: #0e0e0e;
+    border: none;
+    border-radius: var(--radius);
+    font-family: var(--font-display);
+    font-size: 22px;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    transition: transform 0.12s, opacity 0.12s;
+  }
+  .calc-btn:hover { opacity: 0.9; }
+  .calc-btn:active { transform: scale(0.98); }
+
+  /* ── RESULT ── */
+  .result-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    margin-bottom: 24px;
+    display: none;
+    animation: fadeUp 0.35s ease;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .rank-hero {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 28px;
+  }
+  .rank-emblem {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 34px;
+    flex-shrink: 0;
+    border: 2px solid rgba(255,255,255,0.1);
+  }
+  .rank-title {
+    font-family: var(--font-display);
+    font-size: 40px;
+    line-height: 1;
+    letter-spacing: 0.04em;
+    color: var(--text);
+  }
+  .rank-desc {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* progress bar */
+  .progress-wrap { margin-bottom: 24px; }
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .progress-meta strong { color: var(--text); }
+  .progress-bg {
+    height: 6px;
+    background: var(--bg3);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 0%;
+  }
+
+  /* stats */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .stat-box {
+    background: var(--bg3);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+  }
+  .stat-num {
+    font-family: var(--font-display);
+    font-size: 26px;
+    letter-spacing: 0.04em;
+    color: var(--text);
+    line-height: 1;
+  }
+  .stat-lbl {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 4px;
+  }
+
+  /* next rank */
+  .next-rank {
+    background: rgba(232,200,64,0.06);
+    border: 1px solid rgba(232,200,64,0.2);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .next-rank-arrow {
+    font-size: 20px;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+  .next-rank-text { font-size: 13px; color: var(--muted); }
+  .next-rank-text strong { color: var(--text); font-size: 14px; display: block; }
+
+  /* ── RANK TABLE ── */
+  .table-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+  .table-header-row {
+    display: grid;
+    grid-template-columns: 36px 28px 1fr 80px 80px;
+    gap: 8px;
+    padding: 12px 20px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #444;
+    border-bottom: 1px solid var(--border);
+  }
+  .rank-row {
+    display: grid;
+    grid-template-columns: 36px 28px 1fr 80px 80px;
+    gap: 8px;
+    align-items: center;
+    padding: 11px 20px;
+    font-size: 13px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+  .rank-row:last-child { border-bottom: none; }
+  .rank-row:hover { background: var(--bg3); }
+  .rank-row.active-row {
+    background: rgba(232,200,64,0.06);
+    border-left: 3px solid var(--accent);
+    padding-left: 17px;
+  }
+  .rank-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .rank-emoji-cell { font-size: 16px; }
+  .rank-name-cell { font-weight: 500; color: var(--text); }
+  .rank-mult-cell { color: var(--muted); text-align: right; font-size: 12px; font-family: monospace; }
+  .rank-kg-cell { color: #555; text-align: right; font-size: 12px; font-family: monospace; }
+  .rank-kg-cell.has-bw { color: var(--muted); }
+
+  /* tier group dividers */
+  .tier-divider {
+    padding: 8px 20px 6px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    background: var(--bg3);
+    color: #444;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ── LEADERBOARD PLACEHOLDER ── */
+  .leaderboard-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .lb-icon { font-size: 40px; margin-bottom: 16px; }
+  .lb-title {
+    font-family: var(--font-display);
+    font-size: 28px;
+    letter-spacing: 0.04em;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  .lb-sub { font-size: 14px; color: var(--muted); margin-bottom: 24px; }
+  .lb-badge {
+    display: inline-block;
+    background: rgba(232,200,64,0.1);
+    border: 1px solid rgba(232,200,64,0.25);
+    color: var(--accent);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 20px;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding-top: 32px;
+    font-size: 12px;
+    color: #444;
+    text-align: center;
+  }
+  footer a { color: #555; text-decoration: none; }
+  footer a:hover { color: var(--muted); }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-tag">Bench Press Rank Calculator</div>
+    <h1>GYMRAT<br><span>RANK</span></h1>
+    <p class="header-sub">Find out where you stand. No ego, no BS — just your bench press relative to your bodyweight.</p>
+  </header>
+
+  <!-- CALCULATOR -->
+  <div class="section-label">Calculate your rank</div>
+  <div class="calc-card">
+    <div class="input-grid">
+      <div class="input-group">
+        <label>Bodyweight</label>
+        <div class="input-row">
+          <input type="number" id="bw" placeholder="75" min="30" max="300" step="0.5" autocomplete="off">
+          <div class="unit-toggle">
+            <button class="unit-btn active" onclick="setUnit('kg')">kg</button>
+            <button class="unit-btn" onclick="setUnit('lb')">lb</button>
+          </div>
+        </div>
+      </div>
+      <div class="input-group">
+        <label>Max Bench Press (1 rep)</label>
+        <div class="input-row">
+          <input type="number" id="bench" placeholder="100" min="10" max="600" step="0.5" autocomplete="off">
+          <div class="unit-toggle" style="border-left:none; pointer-events:none;">
+            <span id="unit-display" style="padding:0 14px; display:flex; align-items:center; font-size:12px; font-weight:600; color:#444; letter-spacing:0.05em;">kg</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <button class="calc-btn" onclick="calculate()">FIND MY RANK</button>
+  </div>
+
+  <!-- RESULT -->
+  <div class="result-card" id="result-card">
+    <div class="rank-hero">
+      <div class="rank-emblem" id="rank-emblem"></div>
+      <div>
+        <div class="rank-title" id="rank-title"></div>
+        <div class="rank-desc" id="rank-desc"></div>
+      </div>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-meta">
+        <span>Ratio: <strong id="ratio-display"></strong></span>
+        <span>4.5× = ceiling</span>
+      </div>
+      <div class="progress-bg">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-num" id="s-bw">—</div>
+        <div class="stat-lbl">Bodyweight</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="s-bench">—</div>
+        <div class="stat-lbl">Bench Max</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="s-ratio">—</div>
+        <div class="stat-lbl">BW Multiple</div>
+      </div>
+    </div>
+
+    <div class="next-rank" id="next-rank">
+      <div class="next-rank-arrow">↑</div>
+      <div class="next-rank-text">
+        <strong id="next-title"></strong>
+        <span id="next-detail"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RANK TABLE -->
+  <div class="section-label" style="margin-top:40px">All ranks</div>
+  <div class="table-card">
+    <div class="table-header-row">
+      <div></div>
+      <div></div>
+      <div>Rank</div>
+      <div style="text-align:right">BW ratio</div>
+      <div style="text-align:right">Your kg</div>
+    </div>
+    <div id="rank-table-body"></div>
+  </div>
+
+  <!-- LEADERBOARD PLACEHOLDER -->
+  <div class="section-label">Leaderboard</div>
+  <div class="leaderboard-card" id="leaderboard">
+    <div class="lb-icon">🏆</div>
+    <div class="lb-title">GLOBAL LEADERBOARD</div>
+    <p class="lb-sub">See how you stack up against everyone.<br>Coming soon — submit your score and claim your spot.</p>
+    <div class="lb-badge">Coming Soon</div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <p>GymRat Rank &nbsp;·&nbsp; Open source &nbsp;·&nbsp; <a href="https://github.com" target="_blank">GitHub</a></p>
+    <p style="margin-top:8px">Ranks based on bodyweight-to-bench ratio. Standards sourced from competitive powerlifting benchmarks.</p>
+  </footer>
+
+</div>
+
+<script>
+const RANKS = [
+  { tier:"Entry",     sub:1, emoji:"🥋", color:"#555",    bg:"#222",    mult:[0,     0.35] },
+  { tier:"Entry",     sub:2, emoji:"🥋", color:"#666",    bg:"#252525", mult:[0.35,  0.5 ] },
+  { tier:"Entry",     sub:3, emoji:"🥋", color:"#777",    bg:"#282828", mult:[0.5,   0.65] },
+  { tier:"Bronze",    sub:1, emoji:"🔶", color:"#cd7f32", bg:"#221a0f", mult:[0.65,  0.8 ] },
+  { tier:"Bronze",    sub:2, emoji:"🔶", color:"#b87333", bg:"#261c0d", mult:[0.8,   0.95] },
+  { tier:"Bronze",    sub:3, emoji:"🔶", color:"#a0522d", bg:"#2a1e0b", mult:[0.95,  1.1 ] },
+  { tier:"Silver",    sub:1, emoji:"⚪", color:"#999",    bg:"#1e1e1e", mult:[1.1,   1.25] },
+  { tier:"Silver",    sub:2, emoji:"⚪", color:"#bbb",    bg:"#202020", mult:[1.25,  1.4 ] },
+  { tier:"Silver",    sub:3, emoji:"⚪", color:"#ccc",    bg:"#222222", mult:[1.4,   1.55] },
+  { tier:"Gold",      sub:1, emoji:"🌕", color:"#d4af37", bg:"#1f1c0d", mult:[1.55,  1.7 ] },
+  { tier:"Gold",      sub:2, emoji:"🌕", color:"#e8c840", bg:"#231e0e", mult:[1.7,   1.85] },
+  { tier:"Gold",      sub:3, emoji:"🌕", color:"#ffd700", bg:"#27210f", mult:[1.85,  2.0 ] },
+  { tier:"Platinum",  sub:1, emoji:"💠", color:"#5bc0de", bg:"#0d1a20", mult:[2.0,   2.15] },
+  { tier:"Platinum",  sub:2, emoji:"💠", color:"#4ab8d4", bg:"#0f1e24", mult:[2.15,  2.3 ] },
+  { tier:"Platinum",  sub:3, emoji:"💠", color:"#3cb4cc", bg:"#112228", mult:[2.3,   2.5 ] },
+  { tier:"Diamond",   sub:1, emoji:"💎", color:"#b06aff", bg:"#160e24", mult:[2.5,   2.65] },
+  { tier:"Diamond",   sub:2, emoji:"💎", color:"#9c4dff", bg:"#190e2a", mult:[2.65,  2.8 ] },
+  { tier:"Diamond",   sub:3, emoji:"💎", color:"#8a2be2", bg:"#1c0e30", mult:[2.8,   3.0 ] },
+  { tier:"Legendary", sub:1, emoji:"🔱", color:"#ff5c5c", bg:"#200e0e", mult:[3.0,   3.2 ] },
+  { tier:"Legendary", sub:2, emoji:"🔱", color:"#ff3b3b", bg:"#240d0d", mult:[3.2,   3.4 ] },
+  { tier:"Legendary", sub:3, emoji:"🔱", color:"#ff1a1a", bg:"#280c0c", mult:[3.4,   3.6 ] },
+  { tier:"Master",    sub:1, emoji:"👑", color:"#50e878", bg:"#0a1f10", mult:[3.6,   3.85] },
+  { tier:"Master",    sub:2, emoji:"👑", color:"#39d45f", bg:"#0c2412", mult:[3.85,  4.1 ] },
+  { tier:"Master",    sub:3, emoji:"👑", color:"#22c94d", bg:"#0e2914", mult:[4.1,   Infinity] },
+];
+
+const DESCRIPTIONS = {
+  "Entry":     ["Just getting started", "Beginner gains kicking in", "Finding your footing"],
+  "Bronze":    ["Decent beginner strength", "Consistent gym-goer", "Almost your bodyweight"],
+  "Silver":    ["Bodyweight bencher — real progress", "Solid intermediate lifter", "Upper intermediate territory"],
+  "Gold":      ["Advanced lifter — top 25%", "Strong advanced, serious athlete", "Elite territory — top 10%"],
+  "Platinum":  ["2× bodyweight club — top 5%", "Serious strength athlete", "Top 3% of all lifters"],
+  "Diamond":   ["Elite powerlifter level", "Near world-class strength", "Top 1% — exceptional"],
+  "Legendary": ["World record territory", "Superhuman strength", "The mythical zone"],
+  "Master":    ["Beyond elite — freakish", "All-time great level", "Untouchable. You win gym."],
+};
+
+const TIERS = ["Entry","Bronze","Silver","Gold","Platinum","Diamond","Legendary","Master"];
+let unit = "kg";
+let currentBw = null;
+
+function setUnit(u) {
+  unit = u;
+  document.querySelectorAll(".unit-btn").forEach(b => b.classList.toggle("active", b.textContent.trim() === u));
+  document.getElementById("unit-display").textContent = u;
+}
+
+function calculate() {
+  const bwRaw   = parseFloat(document.getElementById("bw").value);
+  const benchRaw = parseFloat(document.getElementById("bench").value);
+
+  if (!bwRaw || !benchRaw || bwRaw <= 0 || benchRaw <= 0) {
+    alert("Enter valid positive numbers for both fields.");
+    return;
+  }
+
+  const bw    = unit === "lb" ? bwRaw * 0.453592 : bwRaw;
+  const bench = unit === "lb" ? benchRaw * 0.453592 : benchRaw;
+  currentBw = bw;
+
+  const ratio = bench / bw;
+  let idx = RANKS.findIndex(r => ratio >= r.mult[0] && ratio < r.mult[1]);
+  if (idx === -1) idx = RANKS.length - 1;
+  const rank = RANKS[idx];
+  const desc = DESCRIPTIONS[rank.tier][rank.sub - 1];
+
+  const card = document.getElementById("result-card");
+  card.style.display = "block";
+  card.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+  const emblem = document.getElementById("rank-emblem");
+  emblem.textContent = rank.emoji;
+  emblem.style.background = rank.bg;
+  emblem.style.borderColor = rank.color + "44";
+
+  document.getElementById("rank-title").textContent = rank.tier.toUpperCase() + " " + rank.sub;
+  document.getElementById("rank-title").style.color = rank.color;
+  document.getElementById("rank-desc").textContent   = desc;
+
+  const pct = Math.min((ratio / 4.5) * 100, 100);
+  document.getElementById("progress-fill").style.width = pct.toFixed(1) + "%";
+  document.getElementById("progress-fill").style.background = rank.color;
+  document.getElementById("ratio-display").textContent = ratio.toFixed(2) + "×";
+
+  const dispBw    = unit === "lb" ? bwRaw.toFixed(1) + " lb" : bw.toFixed(1) + " kg";
+  const dispBench = unit === "lb" ? benchRaw.toFixed(1) + " lb" : bench.toFixed(1) + " kg";
+  document.getElementById("s-bw").textContent    = dispBw;
+  document.getElementById("s-bench").textContent = dispBench;
+  document.getElementById("s-ratio").textContent = ratio.toFixed(2) + "×";
+
+  const nextEl = document.getElementById("next-rank");
+  if (idx < RANKS.length - 1) {
+    const next   = RANKS[idx + 1];
+    const needed = (next.mult[0] * bw) - bench;
+    const neededDisp = unit === "lb"
+      ? (needed / 0.453592).toFixed(1) + " lb"
+      : needed.toFixed(1) + " kg";
+    document.getElementById("next-title").textContent  = next.tier + " " + next.sub;
+    document.getElementById("next-detail").textContent = "Lift " + neededDisp + " more to reach " + next.mult[0].toFixed(2) + "× BW";
+    nextEl.style.display = "flex";
+  } else {
+    nextEl.style.display = "none";
+  }
+
+  renderTable(idx, bw);
+}
+
+function renderTable(activeIdx, bw) {
+  const body = document.getElementById("rank-table-body");
+  body.innerHTML = "";
+  let lastTier = null;
+
+  RANKS.forEach((r, i) => {
+    if (r.tier !== lastTier) {
+      const div = document.createElement("div");
+      div.className = "tier-divider";
+      div.textContent = "— " + r.tier + " —";
+      body.appendChild(div);
+      lastTier = r.tier;
+    }
+
+    const lo = r.mult[0].toFixed(2);
+    const hi = r.mult[1] === Infinity ? "∞" : r.mult[1].toFixed(2);
+
+    let kgStr = "—";
+    if (bw) {
+      const loKg = (r.mult[0] * bw).toFixed(1);
+      const hiKg = r.mult[1] === Infinity ? loKg + "+" : (r.mult[1] * bw).toFixed(1);
+      kgStr = loKg + "–" + hiKg;
+    }
+
+    const row = document.createElement("div");
+    row.className = "rank-row" + (i === activeIdx ? " active-row" : "");
+    row.innerHTML = `
+      <div><div class="rank-dot" style="background:${r.color}"></div></div>
+      <div class="rank-emoji-cell">${r.emoji}</div>
+      <div class="rank-name-cell" style="color:${i === activeIdx ? r.color : ''}">${r.tier} ${r.sub}</div>
+      <div class="rank-mult-cell">${lo}–${hi}×</div>
+      <div class="rank-kg-cell ${bw ? 'has-bw' : ''}">${kgStr}</div>
+    `;
+    body.appendChild(row);
+  });
+}
+
+// init table with no BW
+renderTable(-1, null);
+
+// enter key support
+document.addEventListener("keydown", e => { if (e.key === "Enter") calculate(); });
+</script>
+</body>
+</html>
