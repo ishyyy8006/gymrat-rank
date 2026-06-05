@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GymRat Rank — Bench Press Calculator</title>
+<title>GymRat Rank — Bench Press Calculator & Leaderboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -37,7 +37,6 @@
     min-height: 100vh;
   }
 
-  /* ── NOISE TEXTURE OVERLAY ── */
   body::before {
     content: '';
     position: fixed;
@@ -80,7 +79,6 @@
     max-width: 480px;
   }
 
-  /* ── SECTION LABELS ── */
   .section-label {
     font-size: 11px;
     font-weight: 600;
@@ -88,15 +86,19 @@
     text-transform: uppercase;
     color: var(--muted);
     margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
+  .lock-timer { color: var(--red); font-size: 11px; font-weight: 400; text-transform: none; letter-spacing: 0; }
 
-  /* ── CALCULATOR CARD ── */
+  /* ── CARDS ── */
   .calc-card {
     background: var(--bg2);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     padding: 32px;
-    margin-bottom: 24px;
+    margin-bottom: 32px;
   }
 
   .input-grid {
@@ -131,6 +133,7 @@
     transition: border-color 0.2s;
   }
   .input-row:focus-within { border-color: var(--accent); }
+  .input-row.locked { background: #121212; border-color: rgba(255,255,255,0.03); opacity: 0.7; }
 
   .input-row input {
     flex: 1;
@@ -144,14 +147,12 @@
     color: var(--text);
     width: 100%;
   }
+  .input-row input:disabled { color: #666; cursor: not-allowed; }
   .input-row input::placeholder { color: #444; }
   .input-row input[type=number]::-webkit-inner-spin-button,
   .input-row input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
 
-  .unit-toggle {
-    display: flex;
-    border-left: 1px solid var(--border2);
-  }
+  .unit-toggle { display: flex; border-left: 1px solid var(--border2); }
   .unit-btn {
     padding: 0 14px;
     background: transparent;
@@ -167,6 +168,7 @@
   .unit-btn:not(:last-child) { border-right: 1px solid var(--border); }
   .unit-btn.active { color: var(--accent); background: rgba(232,200,64,0.08); }
   .unit-btn:hover:not(.active) { color: var(--text); }
+  .unit-btn:disabled { cursor: not-allowed; color: #444 !important; background: transparent !important; }
 
   .calc-btn {
     width: 100%;
@@ -183,6 +185,7 @@
   }
   .calc-btn:hover { opacity: 0.9; }
   .calc-btn:active { transform: scale(0.98); }
+  .calc-btn:disabled { background: #333; color: #666; cursor: not-allowed; transform: none !important; opacity: 1; }
 
   /* ── RESULT ── */
   .result-card {
@@ -190,7 +193,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     padding: 32px;
-    margin-bottom: 24px;
+    margin-bottom: 32px;
     display: none;
     animation: fadeUp 0.35s ease;
   }
@@ -199,12 +202,7 @@
     to   { opacity: 1; transform: translateY(0); }
   }
 
-  .rank-hero {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    margin-bottom: 28px;
-  }
+  .rank-hero { display: flex; align-items: center; gap: 20px; margin-bottom: 28px; }
   .rank-emblem {
     width: 72px;
     height: 72px;
@@ -216,95 +214,28 @@
     flex-shrink: 0;
     border: 2px solid rgba(255,255,255,0.1);
   }
-  .rank-title {
-    font-family: var(--font-display);
-    font-size: 40px;
-    line-height: 1;
-    letter-spacing: 0.04em;
-    color: var(--text);
-  }
-  .rank-desc {
-    font-size: 13px;
-    color: var(--muted);
-    margin-top: 4px;
-  }
+  .rank-title { font-family: var(--font-display); font-size: 40px; line-height: 1; letter-spacing: 0.04em; color: var(--text); }
+  .rank-desc { font-size: 13px; color: var(--muted); margin-top: 4px; }
 
-  /* progress bar */
   .progress-wrap { margin-bottom: 24px; }
-  .progress-meta {
-    display: flex;
-    justify-content: space-between;
-    font-size: 12px;
-    color: var(--muted);
-    margin-bottom: 8px;
-  }
+  .progress-meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
   .progress-meta strong { color: var(--text); }
-  .progress-bg {
-    height: 6px;
-    background: var(--bg3);
-    border-radius: 3px;
-    overflow: hidden;
-  }
-  .progress-fill {
-    height: 100%;
-    border-radius: 3px;
-    transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1);
-    width: 0%;
-  }
+  .progress-bg { height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1); width: 0%; }
 
-  /* stats */
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    margin-bottom: 24px;
-  }
-  .stat-box {
-    background: var(--bg3);
-    border-radius: var(--radius);
-    padding: 14px 16px;
-  }
-  .stat-num {
-    font-family: var(--font-display);
-    font-size: 26px;
-    letter-spacing: 0.04em;
-    color: var(--text);
-    line-height: 1;
-  }
-  .stat-lbl {
-    font-size: 11px;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin-top: 4px;
-  }
+  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+  .stat-box { background: var(--bg3); border-radius: var(--radius); padding: 14px 16px; }
+  .stat-num { font-family: var(--font-display); font-size: 26px; letter-spacing: 0.04em; color: var(--text); line-height: 1; }
+  .stat-lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 4px; }
 
-  /* next rank */
-  .next-rank {
-    background: rgba(232,200,64,0.06);
-    border: 1px solid rgba(232,200,64,0.2);
-    border-radius: var(--radius);
-    padding: 14px 18px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .next-rank-arrow {
-    font-size: 20px;
-    color: var(--accent);
-    flex-shrink: 0;
-  }
+  .next-rank { background: rgba(232,200,64,0.06); border: 1px solid rgba(232,200,64,0.2); border-radius: var(--radius); padding: 14px 18px; display: flex; align-items: center; gap: 12px; }
+  .next-rank-arrow { font-size: 20px; color: var(--accent); flex-shrink: 0; }
   .next-rank-text { font-size: 13px; color: var(--muted); }
   .next-rank-text strong { color: var(--text); font-size: 14px; display: block; }
 
-  /* ── RANK TABLE ── */
-  .table-card {
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-    margin-bottom: 24px;
-  }
+  /* ── TABLES & LEADERBOARDS ── */
+  .table-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 32px; }
+  
   .table-header-row {
     display: grid;
     grid-template-columns: 36px 28px 1fr 80px 80px;
@@ -317,128 +248,132 @@
     color: #444;
     border-bottom: 1px solid var(--border);
   }
-  .rank-row {
-    display: grid;
-    grid-template-columns: 36px 28px 1fr 80px 80px;
-    gap: 8px;
-    align-items: center;
-    padding: 11px 20px;
-    font-size: 13px;
-    border-bottom: 1px solid var(--border);
-    transition: background 0.15s;
-  }
+  .rank-row { display: grid; grid-template-columns: 36px 28px 1fr 80px 80px; gap: 8px; align-items: center; padding: 11px 20px; font-size: 13px; border-bottom: 1px solid var(--border); transition: background 0.15s; }
   .rank-row:last-child { border-bottom: none; }
   .rank-row:hover { background: var(--bg3); }
-  .rank-row.active-row {
-    background: rgba(232,200,64,0.06);
-    border-left: 3px solid var(--accent);
-    padding-left: 17px;
-  }
+  .rank-row.active-row { background: rgba(232,200,64,0.06); border-left: 3px solid var(--accent); padding-left: 17px; }
   .rank-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
   .rank-emoji-cell { font-size: 16px; }
   .rank-name-cell { font-weight: 500; color: var(--text); }
   .rank-mult-cell { color: var(--muted); text-align: right; font-size: 12px; font-family: monospace; }
   .rank-kg-cell { color: #555; text-align: right; font-size: 12px; font-family: monospace; }
   .rank-kg-cell.has-bw { color: var(--muted); }
+  .tier-divider { padding: 8px 20px 6px; font-size: 10px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; background: var(--bg3); color: #444; border-bottom: 1px solid var(--border); }
 
-  /* tier group dividers */
-  .tier-divider {
-    padding: 8px 20px 6px;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    background: var(--bg3);
-    color: #444;
-    border-bottom: 1px solid var(--border);
+  /* Leaderboard specifics */
+  .lb-header-row { display: grid; grid-template-columns: 40px 1fr 100px 80px; gap: 12px; padding: 14px 20px; font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #444; border-bottom: 1px solid var(--border); }
+  .lb-row { display: grid; grid-template-columns: 40px 1fr 100px 80px; gap: 12px; align-items: center; padding: 14px 20px; font-size: 14px; border-bottom: 1px solid var(--border); }
+  .lb-row:last-child { border-bottom: none; }
+  .lb-row.user-row { background: rgba(232,200,64,0.04); border-left: 3px solid var(--accent); padding-left: 17px; font-weight: 600; }
+  .lb-rank { font-family: var(--font-display); font-size: 18px; color: var(--muted); }
+  .lb-row.user-row .lb-rank { color: var(--accent); }
+  .lb-name { color: var(--text); }
+  .lb-tier { font-size: 12px; font-weight: 500; }
+  .lb-ratio { text-align: right; font-family: monospace; font-size: 13px; color: var(--muted); }
+  .lb-row.user-row .lb-ratio { color: var(--text); }
+
+  /* ── ONBOARDING MODAL ── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(6,6,6,0.92);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
   }
-
-  /* ── LEADERBOARD PLACEHOLDER ── */
-  .leaderboard-card {
+  .modal-overlay.active { opacity: 1; pointer-events: auto; }
+  .modal-card {
     background: var(--bg2);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border2);
     border-radius: var(--radius-lg);
-    padding: 32px;
-    text-align: center;
-    margin-bottom: 24px;
+    width: 100%;
+    max-width: 440px;
+    padding: 40px 32px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    transform: translateY(20px);
+    transition: transform 0.3s ease;
   }
-  .lb-icon { font-size: 40px; margin-bottom: 16px; }
-  .lb-title {
-    font-family: var(--font-display);
-    font-size: 28px;
-    letter-spacing: 0.04em;
-    color: var(--text);
-    margin-bottom: 8px;
-  }
-  .lb-sub { font-size: 14px; color: var(--muted); margin-bottom: 24px; }
-  .lb-badge {
-    display: inline-block;
-    background: rgba(232,200,64,0.1);
-    border: 1px solid rgba(232,200,64,0.25);
-    color: var(--accent);
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    padding: 6px 16px;
-    border-radius: 20px;
-  }
+  .modal-overlay.active .modal-card { transform: translateY(0); }
+  .modal-title { font-family: var(--font-display); font-size: 36px; letter-spacing: 0.02em; line-height: 1; margin-bottom: 8px; }
+  .modal-subtitle { font-size: 14px; color: var(--muted); margin-bottom: 28px; }
+  .modal-card .input-group { margin-bottom: 20px; }
 
-  /* ── FOOTER ── */
-  footer {
-    border-top: 1px solid var(--border);
-    padding-top: 32px;
-    font-size: 12px;
-    color: #444;
-    text-align: center;
-  }
+  footer { border-top: 1px solid var(--border); padding-top: 32px; font-size: 12px; color: #444; text-align: center; }
   footer a { color: #555; text-decoration: none; }
   footer a:hover { color: var(--muted); }
-
-  /* ── SCROLLBAR ── */
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
   ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 3px; }
 </style>
 </head>
 <body>
-<div class="page">
 
-  <!-- HEADER -->
-  <header>
-    <div class="header-tag">Bench Press Rank Calculator</div>
-    <h1>GYMRAT<br><span>RANK</span></h1>
-    <p class="header-sub">Find out where you stand. No ego, no BS — just your bench press relative to your bodyweight.</p>
-  </header>
-
-  <!-- CALCULATOR -->
-  <div class="section-label">Calculate your rank</div>
-  <div class="calc-card">
-    <div class="input-grid">
-      <div class="input-group">
-        <label>Bodyweight</label>
-        <div class="input-row">
-          <input type="number" id="bw" placeholder="75" min="30" max="300" step="0.5" autocomplete="off">
-          <div class="unit-toggle">
-            <button class="unit-btn active" onclick="setUnit('kg')">kg</button>
-            <button class="unit-btn" onclick="setUnit('lb')">lb</button>
-          </div>
-        </div>
+<div class="modal-overlay" id="onboard-modal">
+  <div class="modal-card">
+    <div class="modal-title">LOCK IN YOUR STATE</div>
+    <div class="modal-subtitle">To establish true un-egoed tracking, your username and bodyweight will be locked for exactly 1 week.</div>
+    
+    <div class="input-group">
+      <label>Locker Username</label>
+      <div class="input-row">
+        <input type="text" id="modal-username" placeholder="e.g., BenchBeast99" max-length="16" autocomplete="off">
       </div>
-      <div class="input-group">
-        <label>Max Bench Press (1 rep)</label>
-        <div class="input-row">
-          <input type="number" id="bench" placeholder="100" min="10" max="600" step="0.5" autocomplete="off">
-          <div class="unit-toggle" style="border-left:none; pointer-events:none;">
-            <span id="unit-display" style="padding:0 14px; display:flex; align-items:center; font-size:12px; font-weight:600; color:#444; letter-spacing:0.05em;">kg</span>
-          </div>
+    </div>
+
+    <div class="input-group">
+      <label>Verified Bodyweight</label>
+      <div class="input-row">
+        <input type="number" id="modal-bw" placeholder="75" min="30" max="300" step="0.1" autocomplete="off">
+        <div class="unit-toggle">
+          <button class="unit-btn active" id="m-unit-kg" onclick="setModalUnit('kg')">kg</button>
+          <button class="unit-btn" id="m-unit-lb" onclick="setModalUnit('lb')">lb</button>
         </div>
       </div>
     </div>
-    <button class="calc-btn" onclick="calculate()">FIND MY RANK</button>
+
+    <button class="calc-btn" style="margin-top: 12px;" onclick="submitOnboarding()">AUTHENTICATE PROFILE</button>
+  </div>
+</div>
+
+<div class="page">
+
+  <header>
+    <div class="header-tag">Bench Press Rank Calculator</div>
+    <h1>GYMRAT<br><span>RANK</span></h1>
+    <p class="header-sub">Find out where you stand. No ego, no BS — verified calculations tracked weekly.</p>
+  </header>
+
+  <div class="section-label">
+    <span>Official Leaderboard Submission</span>
+    <span class="lock-timer" id="lock-countdown">Weight unlocked</span>
+  </div>
+  <div class="calc-card">
+    <div class="input-grid">
+      <div class="input-group">
+        <label>Actual Bodyweight (Locked)</label>
+        <div class="input-row locked">
+          <input type="number" id="official-bw" disabled>
+          <div class="unit-toggle">
+            <button class="unit-btn" id="official-unit-display" disabled style="opacity:1; color:var(--muted)">kg</button>
+          </div>
+        </div>
+      </div>
+      <div class="input-group">
+        <label>Official Bench Max (1 Rep)</label>
+        <div class="input-row">
+          <input type="number" id="official-bench" placeholder="100" min="10" max="600" step="0.5" autocomplete="off">
+        </div>
+      </div>
+    </div>
+    <button class="calc-btn" id="official-submit-btn" onclick="calculateOfficial()">SUBMIT TO LEADERBOARD</button>
   </div>
 
-  <!-- RESULT -->
   <div class="result-card" id="result-card">
     <div class="rank-hero">
       <div class="rank-emblem" id="rank-emblem"></div>
@@ -482,29 +417,52 @@
     </div>
   </div>
 
-  <!-- RANK TABLE -->
-  <div class="section-label" style="margin-top:40px">All ranks</div>
+  <div class="section-label">Global Leaderboard (Frozen this week)</div>
+  <div class="table-card" style="padding-bottom: 4px;">
+    <div class="lb-header-row">
+      <div>Rank</div>
+      <div>Lifter</div>
+      <div>Tier</div>
+      <div style="text-align: right">Ratio</div>
+    </div>
+    <div id="leaderboard-body"></div>
+  </div>
+
+  <div class="section-label" style="margin-top:48px;">Experimental Sandbox (Does not affect Leaderboard)</div>
+  <div class="calc-card" style="border-style: dashed; background: rgba(255,255,255,0.01);">
+    <div class="input-grid">
+      <div class="input-group">
+        <label>Hypothetical Bodyweight</label>
+        <div class="input-row">
+          <input type="number" id="exp-bw" placeholder="80" min="30" max="300" step="0.5" autocomplete="off">
+          <div class="unit-toggle">
+            <button class="unit-btn active" id="exp-btn-kg" onclick="setExpUnit('kg')">kg</button>
+            <button class="unit-btn" id="exp-btn-lb" onclick="setExpUnit('lb')">lb</button>
+          </div>
+        </div>
+      </div>
+      <div class="input-group">
+        <label>Hypothetical Bench Max</label>
+        <div class="input-row">
+          <input type="number" id="exp-bench" placeholder="120" min="10" max="600" step="0.5" autocomplete="off">
+        </div>
+      </div>
+    </div>
+    <button class="calc-btn" style="background:#333; color:var(--text);" onclick="calculateExperimental()">TEST SANDBOX METRICS</button>
+  </div>
+
+  <div class="section-label" style="margin-top:40px">All Rank Reference Standards</div>
   <div class="table-card">
     <div class="table-header-row">
       <div></div>
       <div></div>
       <div>Rank</div>
       <div style="text-align:right">BW ratio</div>
-      <div style="text-align:right">Your kg</div>
+      <div style="text-align:right" id="ref-table-header">Weight</div>
     </div>
     <div id="rank-table-body"></div>
   </div>
 
-  <!-- LEADERBOARD PLACEHOLDER -->
-  <div class="section-label">Leaderboard</div>
-  <div class="leaderboard-card" id="leaderboard">
-    <div class="lb-icon">🏆</div>
-    <div class="lb-title">GLOBAL LEADERBOARD</div>
-    <p class="lb-sub">See how you stack up against everyone.<br>Coming soon — submit your score and claim your spot.</p>
-    <div class="lb-badge">Coming Soon</div>
-  </div>
-
-  <!-- FOOTER -->
   <footer>
     <p>GymRat Rank &nbsp;·&nbsp; Open source &nbsp;·&nbsp; <a href="https://github.com" target="_blank">GitHub</a></p>
     <p style="margin-top:8px">Ranks based on bodyweight-to-bench ratio. Standards sourced from competitive powerlifting benchmarks.</p>
@@ -551,32 +509,116 @@ const DESCRIPTIONS = {
   "Master":    ["Beyond elite — freakish", "All-time great level", "Untouchable. You win gym."],
 };
 
-const TIERS = ["Entry","Bronze","Silver","Gold","Platinum","Diamond","Legendary","Master"];
-let unit = "kg";
-let currentBw = null;
+let modalUnit = "kg";
+let expUnit = "kg";
+const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
-function setUnit(u) {
-  unit = u;
-  document.querySelectorAll(".unit-btn").forEach(b => b.classList.toggle("active", b.textContent.trim() === u));
-  document.getElementById("unit-display").textContent = u;
+const MOCK_LEADERBOARD = [
+  { name: "Thor_Svensson", ratio: 3.42, tier: "Legendary 2", color: "#ff3b3b" },
+  { name: "PowerPanda", ratio: 2.35, tier: "Platinum 3", color: "#3cb4cc" },
+  { name: "AlphaLifter", ratio: 1.74, tier: "Gold 2", color: "#e8c840" },
+  { name: "Iron_Metrics", ratio: 1.15, tier: "Silver 1", color: "#999" }
+];
+
+window.onload = function() {
+  checkAuthentication();
+  buildLeaderboard();
+  renderTable(-1, null, "kg");
+  setInterval(updateCountdown, 1000);
+};
+
+function checkAuthentication() {
+  const lockTime = localStorage.getItem("gr_lock_time");
+  if (lockTime && (Date.now() - parseInt(lockTime) < ONE_WEEK_MS)) {
+    document.getElementById("onboard-modal").classList.remove("active");
+    setupOfficialForm();
+  } else {
+    document.getElementById("onboard-modal").classList.add("active");
+  }
 }
 
-function calculate() {
-  const bwRaw   = parseFloat(document.getElementById("bw").value);
-  const benchRaw = parseFloat(document.getElementById("bench").value);
+function setModalUnit(u) {
+  modalUnit = u;
+  document.getElementById("m-unit-kg").classList.toggle("active", u === "kg");
+  document.getElementById("m-unit-lb").classList.toggle("active", u === "lb");
+}
 
-  if (!bwRaw || !benchRaw || bwRaw <= 0 || benchRaw <= 0) {
-    alert("Enter valid positive numbers for both fields.");
+function setExpUnit(u) {
+  expUnit = u;
+  document.getElementById("exp-btn-kg").classList.toggle("active", u === "kg");
+  document.getElementById("exp-btn-lb").classList.toggle("active", u === "lb");
+}
+
+function submitOnboarding() {
+  const usernameInput = document.getElementById("modal-username").value.trim().replace(/\s+/g, '_');
+  const bwInput = parseFloat(document.getElementById("modal-bw").value);
+
+  if (!usernameInput || !bwInput || bwInput <= 0) {
+    alert("Please provide an authentic username and accurate bodyweight.");
     return;
   }
 
-  const bw    = unit === "lb" ? bwRaw * 0.453592 : bwRaw;
-  const bench = unit === "lb" ? benchRaw * 0.453592 : benchRaw;
-  currentBw = bw;
+  localStorage.setItem("gr_username", usernameInput);
+  localStorage.setItem("gr_verified_bw", bwInput);
+  localStorage.setItem("gr_verified_unit", modalUnit);
+  localStorage.setItem("gr_lock_time", Date.now().toString());
+  localStorage.removeItem("gr_submitted_bench"); 
 
-  const ratio = bench / bw;
+  document.getElementById("onboard-modal").classList.remove("active");
+  setupOfficialForm();
+  buildLeaderboard();
+}
+
+function setupOfficialForm() {
+  const verifiedBw = localStorage.getItem("gr_verified_bw");
+  const verifiedUnit = localStorage.getItem("gr_verified_unit");
+  
+  document.getElementById("official-bw").value = verifiedBw;
+  document.getElementById("official-unit-display").textContent = verifiedUnit;
+
+  const pastBench = localStorage.getItem("gr_submitted_bench");
+  if (pastBench) {
+    document.getElementById("official-bench").value = pastBench;
+    document.getElementById("official-bench").disabled = true;
+    document.getElementById("official-submit-btn").disabled = true;
+    document.getElementById("official-submit-btn").textContent = "SUBMISSION FROZEN THIS WEEK";
+    
+    runCalculationVisuals(parseFloat(verifiedBw), parseFloat(pastBench), verifiedUnit);
+  }
+  updateCountdown();
+}
+
+function updateCountdown() {
+  const lockTime = localStorage.getItem("gr_lock_time");
+  const timerLabel = document.getElementById("lock-countdown");
+  if (!lockTime) return;
+
+  const dynamicRemaining = ONE_WEEK_MS - (Date.now() - parseInt(lockTime));
+  if (dynamicRemaining <= 0) {
+    timerLabel.textContent = "Weight unlocked! Refresh to update profile.";
+    timerLabel.style.color = "var(--accent)";
+    return;
+  }
+
+  const days = Math.floor(dynamicRemaining / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((dynamicRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((dynamicRemaining % (1000 * 60 * 60)) / (1000 * 60));
+  
+  timerLabel.textContent = `Locked for ${days}d ${hours}h ${minutes}m`;
+}
+
+function getRankIndex(ratio) {
   let idx = RANKS.findIndex(r => ratio >= r.mult[0] && ratio < r.mult[1]);
   if (idx === -1) idx = RANKS.length - 1;
+  return idx;
+}
+
+function runCalculationVisuals(bwRaw, benchRaw, currentUnit) {
+  const bw = currentUnit === "lb" ? bwRaw * 0.453592 : bwRaw;
+  const bench = currentUnit === "lb" ? benchRaw * 0.453592 : benchRaw;
+  const ratio = bench / bw;
+
+  const idx = getRankIndex(ratio);
   const rank = RANKS[idx];
   const desc = DESCRIPTIONS[rank.tier][rank.sub - 1];
 
@@ -591,38 +633,109 @@ function calculate() {
 
   document.getElementById("rank-title").textContent = rank.tier.toUpperCase() + " " + rank.sub;
   document.getElementById("rank-title").style.color = rank.color;
-  document.getElementById("rank-desc").textContent   = desc;
+  document.getElementById("rank-desc").textContent = desc;
 
   const pct = Math.min((ratio / 4.5) * 100, 100);
   document.getElementById("progress-fill").style.width = pct.toFixed(1) + "%";
   document.getElementById("progress-fill").style.background = rank.color;
   document.getElementById("ratio-display").textContent = ratio.toFixed(2) + "×";
 
-  const dispBw    = unit === "lb" ? bwRaw.toFixed(1) + " lb" : bw.toFixed(1) + " kg";
-  const dispBench = unit === "lb" ? benchRaw.toFixed(1) + " lb" : bench.toFixed(1) + " kg";
-  document.getElementById("s-bw").textContent    = dispBw;
-  document.getElementById("s-bench").textContent = dispBench;
+  document.getElementById("s-bw").textContent = bwRaw.toFixed(1) + " " + currentUnit;
+  document.getElementById("s-bench").textContent = benchRaw.toFixed(1) + " " + currentUnit;
   document.getElementById("s-ratio").textContent = ratio.toFixed(2) + "×";
 
   const nextEl = document.getElementById("next-rank");
   if (idx < RANKS.length - 1) {
-    const next   = RANKS[idx + 1];
-    const needed = (next.mult[0] * bw) - bench;
-    const neededDisp = unit === "lb"
-      ? (needed / 0.453592).toFixed(1) + " lb"
-      : needed.toFixed(1) + " kg";
-    document.getElementById("next-title").textContent  = next.tier + " " + next.sub;
-    document.getElementById("next-detail").textContent = "Lift " + neededDisp + " more to reach " + next.mult[0].toFixed(2) + "× BW";
+    const next = RANKS[idx + 1];
+    const neededKg = (next.mult[0] * bw) - bench;
+    const neededDisp = currentUnit === "lb" ? (neededKg / 0.453592).toFixed(1) + " lb" : neededKg.toFixed(1) + " kg";
+    document.getElementById("next-title").textContent = next.tier + " " + next.sub;
+    document.getElementById("next-detail").textContent = `Lift ${neededDisp} more to achieve a ${next.mult[0].toFixed(2)}× BW metric`;
     nextEl.style.display = "flex";
   } else {
     nextEl.style.display = "none";
   }
 
-  renderTable(idx, bw);
+  renderTable(idx, bwRaw, currentUnit);
 }
 
-function renderTable(activeIdx, bw) {
+function calculateOfficial() {
+  const benchRaw = parseFloat(document.getElementById("official-bench").value);
+  if (!benchRaw || benchRaw <= 0) {
+    alert("Please enter a valid positive weight metric for your bench press.");
+    return;
+  }
+
+  const bwRaw = parseFloat(localStorage.getItem("gr_verified_bw"));
+  const currentUnit = localStorage.getItem("gr_verified_unit");
+
+  localStorage.setItem("gr_submitted_bench", benchRaw.toString());
+  
+  document.getElementById("official-bench").disabled = true;
+  document.getElementById("official-submit-btn").disabled = true;
+  document.getElementById("official-submit-btn").textContent = "SUBMISSION FROZEN THIS WEEK";
+
+  runCalculationVisuals(bwRaw, benchRaw, currentUnit);
+  buildLeaderboard();
+}
+
+function calculateExperimental() {
+  const bwRaw = parseFloat(document.getElementById("exp-bw").value);
+  const benchRaw = parseFloat(document.getElementById("exp-bench").value);
+
+  if (!bwRaw || !benchRaw || bwRaw <= 0 || benchRaw <= 0) {
+    alert("Sandbox inputs must be valid positive quantities.");
+    return;
+  }
+
+  runCalculationVisuals(bwRaw, benchRaw, expUnit);
+}
+
+function buildLeaderboard() {
+  const body = document.getElementById("leaderboard-body");
+  body.innerHTML = "";
+
+  let displayList = [...MOCK_LEADERBOARD];
+
+  const user = localStorage.getItem("gr_username");
+  const bwRaw = parseFloat(localStorage.getItem("gr_verified_bw"));
+  const benchRaw = parseFloat(localStorage.getItem("gr_submitted_bench"));
+  const unitSys = localStorage.getItem("gr_verified_unit");
+
+  if (user && benchRaw && bwRaw) {
+    const bwNorm = unitSys === "lb" ? bwRaw * 0.453592 : bwRaw;
+    const benchNorm = unitSys === "lb" ? benchRaw * 0.453592 : benchRaw;
+    const userRatio = benchNorm / bwNorm;
+    const rIdx = getRankIndex(userRatio);
+
+    displayList.push({
+      name: user + " (You)",
+      ratio: userRatio,
+      tier: `${RANKS[rIdx].tier} ${RANKS[rIdx].sub}`,
+      color: RANKS[rIdx].color,
+      isUser: true
+    });
+  }
+
+  displayList.sort((a, b) => b.ratio - a.ratio);
+
+  displayList.forEach((item, index) => {
+    const row = document.createElement("div");
+    row.className = "lb-row" + (item.isUser ? " user-row" : "");
+    row.innerHTML = `
+      <div class="lb-rank">#${index + 1}</div>
+      <div class="lb-name">${item.name}</div>
+      <div class="lb-tier" style="color:${item.color}">${item.tier}</div>
+      <div class="lb-ratio">${item.ratio.toFixed(2)}×</div>
+    `;
+    body.appendChild(row);
+  });
+}
+
+function renderTable(activeIdx, userBw, currentUnit) {
   const body = document.getElementById("rank-table-body");
+  document.getElementById("ref-table-header").textContent = userBw ? `Your ${currentUnit}` : "Weights";
+  
   body.innerHTML = "";
   let lastTier = null;
 
@@ -638,11 +751,11 @@ function renderTable(activeIdx, bw) {
     const lo = r.mult[0].toFixed(2);
     const hi = r.mult[1] === Infinity ? "∞" : r.mult[1].toFixed(2);
 
-    let kgStr = "—";
-    if (bw) {
-      const loKg = (r.mult[0] * bw).toFixed(1);
-      const hiKg = r.mult[1] === Infinity ? loKg + "+" : (r.mult[1] * bw).toFixed(1);
-      kgStr = loKg + "–" + hiKg;
+    let weightStr = "—";
+    if (userBw) {
+      const loWeight = (r.mult[0] * userBw).toFixed(1);
+      const hiWeight = r.mult[1] === Infinity ? loWeight + "+" : (r.mult[1] * userBw).toFixed(1);
+      weightStr = `${loWeight}–${hiWeight}`;
     }
 
     const row = document.createElement("div");
@@ -652,17 +765,21 @@ function renderTable(activeIdx, bw) {
       <div class="rank-emoji-cell">${r.emoji}</div>
       <div class="rank-name-cell" style="color:${i === activeIdx ? r.color : ''}">${r.tier} ${r.sub}</div>
       <div class="rank-mult-cell">${lo}–${hi}×</div>
-      <div class="rank-kg-cell ${bw ? 'has-bw' : ''}">${kgStr}</div>
+      <div class="rank-kg-cell ${userBw ? 'has-bw' : ''}">${weightStr}</div>
     `;
     body.appendChild(row);
   });
 }
 
-// init table with no BW
-renderTable(-1, null);
-
-// enter key support
-document.addEventListener("keydown", e => { if (e.key === "Enter") calculate(); });
+document.addEventListener("keydown", e => { 
+  if (e.key === "Enter") {
+    if (document.getElementById("onboard-modal").classList.contains("active")) {
+      submitOnboarding();
+    } else {
+      calculateOfficial();
+    }
+  }
+});
 </script>
 </body>
 </html>
